@@ -4,6 +4,7 @@ import com.example.authservice.dto.LoginRequest;
 import com.example.authservice.dto.SignupRequest;
 import com.example.authservice.service.AuthService;
 import org.springframework.web.bind.annotation.*;
+import com.example.authservice.dto.AuthResponse;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -21,7 +22,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody LoginRequest request) {
+    public AuthResponse login(@RequestBody LoginRequest request) {
         return authService.login(request);
     }
 }
