@@ -1,12 +1,10 @@
 package com.example.authservice.service;
 
-import com.example.authservice.dto.AuthResponse;
-import com.example.authservice.dto.LoginRequest;
-import com.example.authservice.dto.SignupRequest;
-import com.example.authservice.model.Role;
-import com.example.authservice.model.User;
+import com.example.authservice.dto.*;
+import com.example.authservice.model.*;
 import com.example.authservice.repository.UserRepository;
 import com.example.authservice.security.JwtUtil;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +26,7 @@ public class AuthService {
                        AuthenticationManager authenticationManager,
                        JwtUtil jwtUtil,
                        RefreshTokenService refreshTokenService) {
+
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -48,6 +47,7 @@ public class AuthService {
         user.setRoles(Set.of(Role.ROLE_USER));
 
         userRepository.save(user);
+
         return "User registered successfully";
     }
 
@@ -65,7 +65,31 @@ public class AuthService {
 
         String accessToken = jwtUtil.generateToken(user.getUsername());
 
-        return new AuthResponse(accessToken, null);
+        RefreshToken refreshToken =
+                refreshTokenService.createRefreshToken(user.getUsername());
+
+        return new AuthResponse(
+                accessToken,
+                refreshToken.getToken()
+        );
     }
 
+    public AuthResponse refresh(String requestToken) {
+
+        RefreshToken refreshToken =
+                refreshTokenService.findByToken(requestToken);
+
+        refreshTokenService.verifyExpiration(refreshToken);
+
+        User user = refreshToken.getUser();
+
+        String newAccessToken =
+                jwtUtil.generateToken(user.getUsername());
+
+        return new AuthResponse(newAccessToken, requestToken);
+    }
+
+    public void logout(String username) {
+        refreshTokenService.deleteByUser(username);
+    }
 }

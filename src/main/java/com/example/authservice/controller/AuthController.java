@@ -4,7 +4,7 @@ import com.example.authservice.dto.LoginRequest;
 import com.example.authservice.dto.SignupRequest;
 import com.example.authservice.dto.AuthResponse;
 import com.example.authservice.service.AuthService;
-
+import com.example.authservice.dto.*;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
@@ -35,4 +35,20 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    // 🔹 REFRESH TOKEN
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refresh(
+            @RequestBody RefreshRequest request) {
+
+        AuthResponse response = authService.refresh(request.getRefreshToken());
+        return ResponseEntity.ok(response);
+
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(
+            @RequestParam String username) {
+
+        authService.logout(username);
+        return ResponseEntity.ok("Logged out successfully");
+    }
 }
