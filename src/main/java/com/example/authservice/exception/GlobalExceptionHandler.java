@@ -52,4 +52,35 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleUserExists(UserAlreadyExistsException ex) {
+        return new ResponseEntity<>(
+                new ApiError(409, "Conflict", ex.getMessage()),
+                HttpStatus.CONFLICT
+        );
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiError> handleUserNotFound(UserNotFoundException ex) {
+        return new ResponseEntity<>(
+                new ApiError(404, "Not Found", ex.getMessage()),
+                HttpStatus.NOT_FOUND
+        );
+    }
+
+    @ExceptionHandler(RefreshTokenExpiredException.class)
+    public ResponseEntity<ApiError> handleExpired(RefreshTokenExpiredException ex) {
+        return new ResponseEntity<>(
+                new ApiError(401, "Unauthorized", ex.getMessage()),
+                HttpStatus.UNAUTHORIZED
+        );
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ApiError> handleInvalidRefresh(InvalidRefreshTokenException ex) {
+        return new ResponseEntity<>(
+                new ApiError(400, "Bad Request", ex.getMessage()),
+                HttpStatus.BAD_REQUEST
+        );
+    }
 }

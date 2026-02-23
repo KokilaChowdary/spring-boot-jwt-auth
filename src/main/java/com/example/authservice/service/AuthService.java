@@ -9,12 +9,16 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.Set;
 
 @Service
 public class AuthService {
 
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(AuthService.class);
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -47,7 +51,7 @@ public class AuthService {
         user.setRoles(Set.of(Role.ROLE_USER));
 
         userRepository.save(user);
-
+        logger.info("User {} registered successfully", request.getUsername());
         return "User registered successfully";
     }
 
@@ -86,10 +90,14 @@ public class AuthService {
         String newAccessToken =
                 jwtUtil.generateToken(user.getUsername());
 
+        logger.info("Access token refreshed for {}", user.getUsername());
+
         return new AuthResponse(newAccessToken, requestToken);
     }
 
     public void logout(String username) {
+
         refreshTokenService.deleteByUser(username);
+        logger.info("User {} logged out", username);
     }
 }
