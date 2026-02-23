@@ -83,4 +83,19 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST
         );
     }
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<ApiError> handleAccountLocked(AccountLockedException ex) {
+        return new ResponseEntity<>(
+                new ApiError(403, "Forbidden", ex.getMessage()),
+                HttpStatus.FORBIDDEN
+        );
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException ex) {
+        return new ResponseEntity<>(
+                new ApiError(401, "Unauthorized", ex.getMessage()),
+                HttpStatus.UNAUTHORIZED
+        );
+    }
 }

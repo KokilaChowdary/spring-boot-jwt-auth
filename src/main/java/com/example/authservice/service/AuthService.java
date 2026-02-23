@@ -4,7 +4,7 @@ import com.example.authservice.dto.*;
 import com.example.authservice.model.*;
 import com.example.authservice.repository.UserRepository;
 import com.example.authservice.security.JwtUtil;
-
+import com.example.authservice.exception.*;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -57,15 +57,57 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
 
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
-                )
-        );
-
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() ->
+                        new UserNotFoundException("User not found"));
+
+
+        if (user.isAccountLocked()) {
+
+            if (user.getLockTime().plusMinutes(15)
+                    .isBefore(java.time.LocalDateTime.now())) {
+
+                user.setAccountLocked(false);
+                user.setFailedAttempts(0);
+                user.setLockTime(null);
+                userRepository.save(user);
+
+            } else {
+                throw new AccountLockedException(
+                        "Account is locked. Try again after 15 minutes."
+                );
+            }
+        }
+
+        try {
+
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getUsername(),
+                            request.getPassword()
+                    )
+            );
+
+        } catch (Exception ex) {
+
+            int attempts = user.getFailedAttempts() + 1;
+            user.setFailedAttempts(attempts);
+
+            if (attempts >= 5) {
+                user.setAccountLocked(true);
+                user.setLockTime(java.time.LocalDateTime.now());
+            }
+
+            userRepository.save(user);
+
+            throw new InvalidCredentialsException(
+                    "Invalid username or password"
+            );
+        }
+
+        // ✅ Successful login → reset attempts
+        user.setFailedAttempts(0);
+        userRepository.save(user);
 
         String accessToken = jwtUtil.generateToken(user.getUsername());
 
